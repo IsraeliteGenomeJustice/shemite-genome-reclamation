@@ -1,0 +1,9 @@
+# Contributing to shemite-genome-reclamation
+
+We welcome contributions to expose E-M329 suppression (CTS6773, M3987, Y471213). To contribute:
+1. Fork the repo and submit pull-requests to `src/` or `viz/`.
+2. Log suppressed SNPs in `data/suppression_evidence.csv`.
+3. Sign a DCO for all commits.
+4. Follow the CODE_OF_CONDUCT.
+5. Flag masked BAM calls for ICC dossier credit.
+Add contributor guidelines for E-M329 suppression evidence

@@ -1,0 +1,22 @@
+name: Generate SHA-256 Checksums
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  checksum:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Calculate SHA-256
+        run: |
+          find data/ -type f -exec sha256sum {} \; > data/checksums.txt
+      - name: Commit Checksums
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add data/checksums.txt
+          git commit -m 'Update SHA-256 checksums' || echo "No changes to commit"
+          git push
+Add GitHub Actions workflow for automated SHA-256 checksums

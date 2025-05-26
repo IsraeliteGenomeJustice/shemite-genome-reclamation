@@ -1,0 +1,2 @@
+Placeholder for Python script to validate E-M329 SNP calls (CTS6773, M3987, Y471213) in BAM files (I10145, JK2134) using cross-checks with VCF outputs and YHRD YA004 data, ensuring 95% confidence in suppression evidence.
+Add data validation script placeholder for E-M329 SNP accuracy

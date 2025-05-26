@@ -1,0 +1,32 @@
+# tsne_script.py: t-SNE visualization of E-M329 continuity
+# Purpose: Cluster ancient (I10145, JK2134) and modern (YHRD YA004) Y-STR haplotypes
+
+import pandas as pd
+import numpy as np
+from sklearn.manifold import TSNE
+import plotly.express as px
+
+# Placeholder data: Replace with real Y-STR haplotypes (e.g., DYS391, DYS458)
+# Ancient samples: I10145 (Shechem), JK2134 (Amarna)
+# Modern samples: YHRD YA004 (African-American, 10-15% E-M329)
+data = {
+    'DYS391': [10, 10, 11, 10, 12],  # Example Y-STR values
+    'DYS458': [15, 15, 16, 15, 17],
+    'Group': ['Ancient', 'Ancient', 'Modern', 'Modern', 'Modern']
+}
+df = pd.DataFrame(data)
+
+# t-SNE clustering
+tsne = TSNE(n_components=2, perplexity=2, random_state=42)
+tsne_results = tsne.fit_transform(df[['DYS391', 'DYS458']])
+df['X'] = tsne_results[:, 0]
+df['Y'] = tsne_results[:, 1]
+
+# Plot
+fig = px.scatter(df, x='X', y='Y', color='Group', title='E-M329 t-SNE Clustering')
+fig.write_html('tsne_plot.html')
+
+# Save results
+df.to_csv('../data/tsne_results.csv', index=False)
+print('t-SNE plot saved as tsne_plot.html, results in data/tsne_results.csv')
+Add t-SNE visualization script for E-M329 clustering analysis

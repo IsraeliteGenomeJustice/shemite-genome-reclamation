@@ -1,0 +1,8 @@
+# Community Contribution Guidelines
+
+Join us to expose E-M329 suppression (CTS6773, M3987, Y471213). Contribute by:
+- Reporting suppressed SNPs in data/suppression_evidence.csv.
+- Developing t-SNE/heatmap scripts in viz/.
+- Validating BAM calls (I10145, JK2134) in src/.
+Follow CODE_OF_CONDUCT, sign DCO, and log issues. Top contributors cited in ICC dossier.
+Add community contribution guidelines for E-M329 suppression efforts

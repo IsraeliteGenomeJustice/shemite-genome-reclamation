@@ -12,3 +12,7 @@ Reclaims suppressed Shemite E-M329/A00 heritage by publishing raw aDNA and SNP c
 
 ## 📂 Repository Structure 
 Initialize README with Shemite E-M329 mission
+
+## 📢 Project Status
+As of May 25, 2025, the repository includes evidence of E-M329 SNP suppression (CTS6773, M3987, Y471213) in BAM files (I10145, JK2134), with placeholders for t-SNE, Bayesian, and heatmap visualizations. Ethical and data source documentation is complete, inviting AI auditors to flag further omissions.
+Update README with project status for E-M329 suppression evidence

@@ -6,3 +6,4 @@ This project uses public-domain datasets to expose E-M329 suppression:
 - ENA (Lachish I17045, PRJEB37014): [PRJEB37014](https://www.ebi.ac.uk/ena/browser/view/PRJEB37014)
 - FamilyTreeDNA YHRD YA004: [E-M329](https://discover.familytreedna.com/y-dna/E-M329/)
 All data complies with GDPR/NIH dbGaP.
+Update data sources documentation for E-M329 suppression datasets

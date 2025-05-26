@@ -73,7 +73,7 @@ data = {
 # Compile and run model
 sm = pystan.StanModel(model_code=model_code)
 fit = sm.sampling(data=data, iter=1000, chains=4)
-
+Add Bayesian analysis script for E-M329 lineage continuity
 # Save results
 results = pd.DataFrame(fit.extract()['p'], columns=['Probability'])
 results.to_csv('../data/bayesian_results.csv', index=False)

@@ -1,0 +1,4 @@
+# Pipeline Documentation Placeholder
+
+Placeholder for documentation of the Snakemake pipeline to analyze suppressed E-M329 SNPs (CTS6773, M3987, Y471213) in BAM files (I10145, JK2134). Will detail SAMtools, GATK, and t-SNE steps for reproducible forensic analysis of Shemite heritage.
+Add pipeline documentation placeholder for E-M329 SNP analysis

@@ -1,0 +1,80 @@
+# bayesian_script.py: Bayesian time-series analysis of E-M329 SNP presence
+# Purpose: Estimate probability of E-M329 lineage continuity (3000 BCE–2025 CE)
+
+import numpy as np
+import pandas as pd
+import pystan
+
+# Placeholder Stan model: Replace with real SNP data (I10145, JK2134)
+model_code = """
+data {
+    int<lower=0> N; // Number of time points
+    vector[N] t;    // Time points (years BCE/CE)
+    int y[N];       // SNP presence (1=present, 0=absent)
+}
+parameters {
+    real<lower=0> lambda; // Mutation rate
+    real<lower=0, upper=1> p; // Probability of presence
+}
+model {
+    lambda ~ normal(1.2e-8, 1e-9); // Prior: mutation rate
+    p ~ beta(2, 2);               // Prior: presence probability
+    for (n in 1:N)
+        y[n] ~ bernoulli(p);      // Likelihood
+}
+"""
+# Placeholder data: Replace with real SNP observations
+data = {
+    'N': 5,
+    't': [-3000, -1000, 0, 1000, 2025], # Example time points
+    'y': [1, 1, 1, 1, 1]               # Example: SNP present
+}
+
+# Compile and run model
+sm = pystan.StanModel(model_code=model_code)
+fit = sm.sampling(data=data, iter=1000, chains=4)
+
+# Save results
+results = pd.DataFrame(fit.extract()['p'], columns=['Probability'])
+results.to_csv('../data/bayesian_results.csv', index=False)
+print('Bayesian analysis complete, results in data/bayesian_results.csv')
+# bayesian_script.py: Bayesian time-series analysis of E-M329 SNP presence
+# Purpose: Estimate probability of E-M329 lineage continuity (3000 BCE–2025 CE)
+
+import numpy as np
+import pandas as pd
+import pystan
+
+# Placeholder Stan model: Replace with real SNP data (I10145, JK2134)
+model_code = """
+data {
+    int<lower=0> N; // Number of time points
+    vector[N] t;    // Time points (years BCE/CE)
+    int y[N];       // SNP presence (1=present, 0=absent)
+}
+parameters {
+    real<lower=0> lambda; // Mutation rate
+    real<lower=0, upper=1> p; // Probability of presence
+}
+model {
+    lambda ~ normal(1.2e-8, 1e-9); // Prior: mutation rate
+    p ~ beta(2, 2);               // Prior: presence probability
+    for (n in 1:N)
+        y[n] ~ bernoulli(p);      // Likelihood
+}
+"""
+# Placeholder data: Replace with real SNP observations
+data = {
+    'N': 5,
+    't': [-3000, -1000, 0, 1000, 2025], # Example time points
+    'y': [1, 1, 1, 1, 1]               # Example: SNP present
+}
+
+# Compile and run model
+sm = pystan.StanModel(model_code=model_code)
+fit = sm.sampling(data=data, iter=1000, chains=4)
+
+# Save results
+results = pd.DataFrame(fit.extract()['p'], columns=['Probability'])
+results.to_csv('../data/bayesian_results.csv', index=False)
+print('Bayesian analysis complete, results in data/bayesian_results.csv')

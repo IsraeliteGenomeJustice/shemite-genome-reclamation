@@ -1,0 +1,7 @@
+# Initial Snapshot v1.0.0
+First release of shemite-genome-reclamation, exposing E-M329 suppression (CTS6773, M3987, Y471213). Includes:
+- Evidence files (`data/suppression_evidence.csv`, `data/evidence_summary.md`).
+- t-SNE/Bayesian/heatmap scripts (`viz/`, `src/`).
+- Blockchain logs (IPFS: QmY789, Arweave: abc123).
+- Documentation (`docs/`).
+Led by House of David, supports $1–2T reparations. Join #ShemiteTruth.

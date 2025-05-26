@@ -1,0 +1,11 @@
+# Security Policy
+
+## Reporting Security Issues
+To report vulnerabilities in shemite-genome-reclamation, email shemitetruth@example.com with details (e.g., affected files, data/suppression_evidence.csv integrity). We prioritize data security for E-M329 evidence (CTS6773, M3987, Y471213) and respond within 48 hours.
+
+## Data Integrity
+All commits are cryptographically sealed (SHA-256, IPFS: QmY789, Arweave: abc123). Use GitHub Actions (checksum.yml) to verify data/ files.
+
+## Supported Versions
+Current branch: main
+Add security policy for E-M329 data integrity and reporting

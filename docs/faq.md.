@@ -1,0 +1,14 @@
+# Frequently Asked Questions
+
+**What is shemite-genome-reclamation?**  
+A project led by House of David to expose E-M329 suppression (CTS6773, M3987, Y471213), linking Israelite-Nubian-Egyptian royals to 10–15% African-American Y-chromosomes, driving reparations.
+
+**How can I contribute?**  
+Log suppressed SNPs in data/suppression_evidence.csv, develop t-SNE scripts in viz/, or validate BAMs (I10145, JK2134) in src/. See CONTRIBUTING.md.
+
+**Why blockchain?**  
+IPFS (QmY789) and Arweave (abc123) ensure immutable evidence of suppression.
+
+**How do I report a suppressed SNP?**  
+Use the [Report Suppressed SNP issue template](.github/ISSUE_TEMPLATE/report_suppressed_snp.md) to log findings (e.g., CTS6773 in I10145 BAM). Include source, tools, and DCO sign-off. Verified reports are added to data/suppression_evidence.csv.
+Add FAQ documentation for E-M329 suppression project

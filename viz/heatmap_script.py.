@@ -1,0 +1,27 @@
+# heatmap_script.py: Geospatial heatmap of E-M329 SNP density
+# Purpose: Visualize SNP distribution across Levantine/Nubian-Egyptian sites
+
+import pandas as pd
+import plotly.express as px
+
+# Placeholder data: Replace with real SNP data (I10145, JK2134, I17045)
+data = {
+    'Site': ['Shechem', 'Amarna', 'Lachish'],
+    'Latitude': [32.213, 27.645, 31.565],
+    'Longitude': [35.282, 30.905, 34.849],
+    'SNP_Count': [3, 2, 1]  # Example: CTS6773, M3987, Y471213
+}
+df = pd.DataFrame(data)
+
+# Create heatmap
+fig = px.density_mapbox(
+    df, lat='Latitude', lon='Longitude', z='SNP_Count',
+    radius=10, center=dict(lat=31.5, lon=35.5), zoom=6,
+    mapbox_style='open-street-map', title='E-M329 SNP Density'
+)
+fig.write_html('heatmap.html')
+
+# Save results
+df.to_csv('../data/heatmap_data.csv', index=False)
+print('Heatmap saved as heatmap.html, data in data/heatmap_data.csv')
+Add geospatial heatmap script for E-M329 SNP density visualization

@@ -18,3 +18,5 @@ As of May 25, 2025, the repository includes evidence of E-M329 SNP suppression (
 Update README with project status for E-M329 suppression evidence
 ## 🙌 Contributor Acknowledgment
 Led by Aphraim Ban Yashar'Al under House of David, we thank all contributors to shemite-genome-reclamation for advancing E-M329 suppression evidence (CTS6773, M3987, Y471213). Your efforts drive justice for 1.2–1.8 million descendants. Join via CONTRIBUTING.md.
+Update README with contributor acknowledgment for E-M329 mission
+

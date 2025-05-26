@@ -1,0 +1,17 @@
+# Pull Request for shemite-genome-reclamation
+
+## Description
+Describe your changes (e.g., added SNP to data/suppression_evidence.csv, updated t-SNE script in viz/).
+
+## Related Issue
+Link to issue (e.g., #1 for community contributions).
+
+## Changes Made
+- [ ] Added/updated SNP evidence (CTS6773, M3987, Y471213)
+- [ ] Modified src/ or viz/ scripts
+- [ ] Other (specify)
+
+## DCO Sign-Off
+I certify my contribution complies with the Developer Certificate of Origin.
+
+Signed-off-by: Apharaim Ban Yashar'Al <shemitruth@proton.me>

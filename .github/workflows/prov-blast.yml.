@@ -1,0 +1,53 @@
+name: prov-blast
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron:  '0 4 * * 0'    # re-notarise every Sunday 04:00 UTC  (free Chainpoint batch)
+
+jobs:
+  notarise-and-pin:
+    runs-on: ubuntu-latest
+    container: ghcr.io/chrishah/samtools-docker:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Re-call key SNP pile-ups
+        run: |
+          samtools mpileup -f ref.fa data/I10145.bam > out.I10145.pileup
+          samtools mpileup -f ref.fa data/JK2134.bam > out.JK2134.pileup
+
+      - name: Build Merkle root
+        run: |
+          python - <<'PY'
+          import hashlib, json, sys
+          leaves=[open(f,'rb').read() for f in sys.argv[1:]]
+          h=lambda d: hashlib.sha256(d).digest()
+          while len(leaves)>1:
+              leaves=[h(leaves[i] + leaves[i+1]) if i+1<len(leaves) else leaves[i] for i in range(0,len(leaves),2)]
+          open('merkle_root.txt','wb').write(leaves[0])
+          PY out.*.pileup
+          sha256sum out.*.pileup merkle_root.txt > sha256_manifest.txt
+
+      - name: Free Chainpoint anchor
+        run: |
+          curl -s -X POST -H 'Content-Type:application/json' \
+          --data "{\"hashes\":[\"$(cut -d' ' -f1 merkle_root.txt | xxd -p -c256)\"]}" \
+          https://api.chainpoint.org/v3/anchors/bitcoin > chainpoint_proof.json
+          jq .hash merkle_root.txt >/dev/null 2>&1 || true
+
+      - name: Pin artefacts to IPFS
+        uses: web3-storage/add-to-web3@v2
+        with:
+          web3_token: ${{ secrets.WEB3_STORAGE_TOKEN }}
+          path_to_add: 'out.*.pileup,sha256_manifest.txt,merkle_root.txt,chainpoint_proof.json'
+
+      - name: Commit proofs back
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sha256_manifest.txt merkle_root.txt chainpoint_proof.json
+          git commit -m "Prov-Blast auto-proof $(date -u +%F)" || echo "No changes"
+          git push
+Add refined Prov-Blast GitHub Action for zero-risk forensic automation
+

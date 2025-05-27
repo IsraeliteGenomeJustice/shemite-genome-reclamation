@@ -1,4 +1,3 @@
-```yaml
 name: TruthPulse Engine
 on:
   push:
@@ -11,17 +10,26 @@ jobs:
     runs-on: ubuntu-latest
     container: python:3.9-slim
     steps:
+      - name: Install OS packages
+        run: |
+          apt-get update && \
+          apt-get install -y --no-install-recommends curl git && \
+          rm -rf /var/lib/apt/lists/*
       - uses: actions/checkout@v4
+      - name: Create output directory
+        run: mkdir -p out
+      - name: Install Python dependencies
+        run: |
+          for i in {1..3}; do pip install pandas numpy && break || sleep 1; done
       - name: Compile Evidence
         run: |
-          pip install pandas numpy
           python - << 'PY'
-          import pandas as pd
-          df = pd.read_csv('data/suppression_evidence.csv')
-          summary = df[['SNP', 'Sample', 'Status']].to_json('out/evidence_summary.json')
-          with open('out/x_thread.txt', 'w') as f:
-              f.write(f"E-M329 suppression exposed! {len(df)} SNPs hidden. github.com/IsraeliteGenomeJustice/shemite-genome-reclamation #ShemiteTruth")
-          PY
+import pandas as pd
+df = pd.read_csv('data/suppression_evidence.csv')
+df[['SNP','Sample','Status']].to_json('out/evidence_summary.json')
+with open('out/x_thread.txt','w') as f:
+    f.write(f"E-M329 suppression exposed! {len(df)} SNPs hidden. github.com/IsraeliteGenomeJustice/shemite-genome-reclamation #ShemiteTruth")
+PY
       - name: Anchor to Ethereum Layer-2
         run: |
           curl -s -X POST -H 'Content-Type:application/json' \
@@ -41,5 +49,3 @@ jobs:
           git add out/*
           git commit -m "TruthPulse proof $(date -u +%F)" || echo "No changes"
           git push
-```
-Add truthpulse.yml with Pinata integration for IPFS pinning

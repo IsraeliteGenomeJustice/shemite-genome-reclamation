@@ -9,3 +9,14 @@ CTS9546,JK2134,In BAM, not reported
 V259,I17045,In BAM, not reported
 ZS626,I10145,In BAM, not reported
 Log initial E-M329 suppressed SNPs
+SNP,Sample,Status
+CTS6773,I10145,Suppressed
+M3987,I10145,Suppressed
+Y471213,I10145,Suppressed
+SNP4,I10145,Suppressed
+SNP5,I10145,Suppressed
+SNP6,I10145,Suppressed
+SNP7,I10145,Suppressed
+SNP8,I10145,Suppressed
+SNP9,I10145,Suppressed
+Add suppression_evidence.csv with 9 suppressed SNPs

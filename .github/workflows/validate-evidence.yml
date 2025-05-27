@@ -1,28 +1,36 @@
 name: Validate Evidence
+
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch: {}
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   validate:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4                                     # checks out your repo :contentReference[oaicite:2]{index=2}
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4                                 # installs Python into PATH :contentReference[oaicite:3]{index=3}
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
-      - name: Install dependencies
+      - name: Install system & Python deps
         run: |
-          sudo apt-get update && sudo apt-get install -y \
-            python3-pip curl git                                 
-          pip3 install pandas numpy                              # installs OS + Python libs :contentReference[oaicite:4]{index=4}
+          sudo apt-get update
+          sudo apt-get install -y python3-pip curl git coreutils
+          pip3 install pandas numpy
+
+      - name: Verify evidence CSV exists
+        run: |
+          if [ ! -f data/suppression_evidence.csv ]; then
+            echo "ERROR: data/suppression_evidence.csv not found"
+            exit 1
+          fi
 
       - name: Run validation script
-        run: python3 src/validation_script.py                     # executes your existing script
-Add validate-evidence.yml for minimal CI pipeline
+        run: python3 src/validation_script.py

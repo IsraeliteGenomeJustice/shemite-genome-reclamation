@@ -1,3 +1,4 @@
+```yaml
 name: prov-blast
 on:
   push:
@@ -8,7 +9,7 @@ on:
 jobs:
   notarise-and-pin:
     runs-on: ubuntu-latest
-    container: ghcr.io/chrishah/samtools-docker:latest
+    container: ghcr.io/chrishah/samtools-docker:latest   # includes samtools + python
     steps:
       - uses: actions/checkout@v4
 
@@ -34,13 +35,15 @@ jobs:
           curl -s -X POST -H 'Content-Type:application/json' \
           --data "{\"hashes\":[\"$(cut -d' ' -f1 merkle_root.txt | xxd -p -c256)\"]}" \
           https://api.chainpoint.org/v3/anchors/bitcoin > chainpoint_proof.json
-          jq .hash merkle_root.txt >/dev/null 2>&1 || true
+          jq .hash merkle_root.txt >/dev/null 2>&1 || true   # suppress jq absence
 
       - name: Pin artefacts to IPFS
-        uses: web3-storage/add-to-web3@v2
+        uses: aquiladev/ipfs-action@v0.3.1
         with:
-          web3_token: ${{ secrets.WEB3_STORAGE_TOKEN }}
-          path_to_add: 'out.*.pileup,sha256_manifest.txt,merkle_root.txt,chainpoint_proof.json'
+          path: out.*.pileup,sha256_manifest.txt,merkle_root.txt,chainpoint_proof.json
+          service: pinata
+          pinataKey: ${{ secrets.PINATA_JWT }}
+          pinataSecret: ${{ secrets.PINATA_JWT }}
 
       - name: Commit proofs back
         run: |
@@ -49,5 +52,5 @@ jobs:
           git add sha256_manifest.txt merkle_root.txt chainpoint_proof.json
           git commit -m "Prov-Blast auto-proof $(date -u +%F)" || echo "No changes"
           git push
-Add refined Prov-Blast GitHub Action for zero-risk forensic automation
-
+```
+Add updated prov-blast.yml with Pinata integration for IPFS pinning

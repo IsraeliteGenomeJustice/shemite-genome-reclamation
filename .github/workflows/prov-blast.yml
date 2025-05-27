@@ -9,7 +9,7 @@ on:
 jobs:
   notarise-and-pin:
     runs-on: ubuntu-latest
-    container: ghcr.io/chrishah/samtools-docker:latest
+    container: quay.io/biocontainers/samtools:1.15--h3843a85_0
 
     steps:
       - name: Checkout code
@@ -33,14 +33,11 @@ jobs:
         run: |
           python - << 'PY'
             import hashlib, os
-            # Collect and hash each pileup file
             files = sorted(f for f in os.listdir('out') if f.endswith('.pileup'))
             leaves = [hashlib.sha256(open(os.path.join('out', f),'rb').read()).digest() for f in files]
-            # Iteratively build the Merkle root
             while len(leaves) > 1:
                 pairs = [leaves[i:i+2] for i in range(0, len(leaves), 2)]
                 leaves = [hashlib.sha256(b''.join(pair)).digest() for pair in pairs]
-            # Write root and manifest
             with open('out/merkle_root.txt','wb') as rootfile:
                 rootfile.write(leaves[0])
             import subprocess
@@ -53,7 +50,7 @@ jobs:
       - name: Anchor on Chainpoint
         run: |
           ROOT=$(cut -d' ' -f1 out/sha256_manifest.txt | head -1)
-          curl -s -X POST -H "Content-Type: application/json" \
+          curl -s -f -X POST -H "Content-Type: application/json" \
             --data "{\"hashes\":[\"$ROOT\"]}" \
             https://api.chainpoint.org/v3/anchors/bitcoin \
             > out/chainpoint_proof.json
@@ -69,7 +66,7 @@ jobs:
       - name: Commit proofs back to GitHub
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "bot@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add out/*
           git commit -m "Prov‑Blast proof $(date -u +%F)" || echo "No changes"
           git push

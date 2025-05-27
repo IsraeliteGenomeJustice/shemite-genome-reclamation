@@ -1,0 +1,71 @@
+name: TruthPulse Engine
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 06:00 UTC
+
+jobs:
+  evidence-compiler:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install system tools
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -y --no-install-recommends curl git coreutils && \
+          sudo rm -rf /var/lib/apt/lists/*
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Prepare output
+        run: mkdir -p out
+
+      - name: Install Python deps
+        run: pip install pandas numpy
+
+      - name: Verify CSV presence
+        run: ls -l data/suppression_evidence.csv || (echo "Missing CSV" && exit 1)
+
+      - name: Compile Evidence
+        run: |
+          python - << 'PY'
+import pandas as pd
+df = pd.read_csv('data/suppression_evidence.csv')
+df[['SNP','Sample','Status']].to_json('out/evidence_summary.json', orient='records')
+with open('out/x_thread.txt','w') as f:
+    f.write(f"E‑M329 suppression exposed! {len(df)} SNPs hidden. "
+            "github.com/IsraeliteGenomeJustice/shemite-genome-reclamation #ShemiteTruth")
+PY
+
+      - name: Anchor to Ethereum Layer-2
+        run: |
+          ROOT=$(sha256sum out/evidence_summary.json | cut -d' ' -f1)
+          curl -s -X POST -H "Content-Type: application/json" \
+            --data "{\"hashes\":[\"$ROOT\"]}" \
+            https://api.chainpoint.org/v3/anchors/optimism \
+            > out/chainpoint_proof.json
+
+      - name: Pin to IPFS via Pinata
+        uses: aquiladev/ipfs-action@v0.3.1
+        with:
+          service: pinata
+          path: out/evidence_summary.json,out/x_thread.txt,out/chainpoint_proof.json
+          pinataKey: ${{ secrets.PINATA_JWT }}
+          pinataSecret: ${{ secrets.PINATA_JWT }}
+
+      - name: Commit Proofs
+        run: |
+          git config user.name "TruthPulse-Bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add out/*
+          git commit -m "TruthPulse proof $(date -u +%F)" || echo "No changes"
+          git push
+Add updated truthpulse.yml with Leads fixes

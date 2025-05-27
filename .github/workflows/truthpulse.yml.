@@ -55,3 +55,4 @@ PY
           git add out/*
           git commit -m "TruthPulse proof $(date -u +%F)" || echo "No changes"
           git push
+Add corrected truthpulse.yml with fixed path for suppression_evidence.csv

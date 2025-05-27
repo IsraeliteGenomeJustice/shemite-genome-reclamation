@@ -21,10 +21,10 @@ jobs:
           apt-get install -y --no-install-recommends curl git coreutils && \
           rm -rf /var/lib/apt/lists/*
 
-      - name: Prepare output
+      - name: Prepare output directory
         run: mkdir -p out
 
-      - name: Re‑call pile‑ups
+      - name: Re‑call SNP pile‑ups
         run: |
           samtools mpileup -f ref/ref.fa data/I10145.bam > out/I10145.pileup
           samtools mpileup -f ref/ref.fa data/JK2134.bam > out/JK2134.pileup
@@ -32,17 +32,23 @@ jobs:
       - name: Build Merkle root & manifest
         run: |
           python - << 'PY'
-import hashlib, sys, os
-files = sorted([f for f in os.listdir('out') if f.endswith('.pileup')])
-leaves = [hashlib.sha256(open('out/'+f,'rb').read()).digest() for f in files]
-while len(leaves) > 1:
-    pairs = [leaves[i:i+2] for i in range(0,len(leaves),2)]
-    leaves = [hashlib.sha256(b''.join(p)).digest() for p in pairs]
-open('out/merkle_root.txt','wb').write(leaves[0])
-import subprocess
-subprocess.run(['sha256sum'] + ['out/'+f for f in files] + ['out/merkle_root.txt'],
-               stdout=open('out/sha256_manifest.txt','w'))
-PY
+          import hashlib, os
+          # Collect and hash each pileup file
+          files = sorted(f for f in os.listdir('out') if f.endswith('.pileup'))
+          leaves = [hashlib.sha256(open(os.path.join('out', f),'rb').read()).digest() for f in files]
+          # Iteratively build the Merkle root
+          while len(leaves) > 1:
+              pairs = [leaves[i:i+2] for i in range(0, len(leaves), 2)]
+              leaves = [hashlib.sha256(b''.join(pair)).digest() for pair in pairs]
+          # Write root and manifest
+          with open('out/merkle_root.txt','wb') as rootfile:
+              rootfile.write(leaves[0])
+          import subprocess
+          subprocess.run(
+              ['sha256sum'] + [os.path.join('out', f) for f in files + ['merkle_root.txt']],
+              stdout=open('out/sha256_manifest.txt','w')
+          )
+          PY
 
       - name: Anchor on Chainpoint
         run: |
@@ -52,19 +58,24 @@ PY
             https://api.chainpoint.org/v3/anchors/bitcoin \
             > out/chainpoint_proof.json
 
-      - name: Pin to IPFS via Pinata
+      - name: Pin artefacts to IPFS via Pinata
         uses: aquiladev/ipfs-action@v0.3.1
         with:
           service: pinata
-          path: out/I10145.pileup,out/JK2134.pileup,out/sha256_manifest.txt,out/merkle_root.txt,out/chainpoint_proof.json
+          path: |
+            out/I10145.pileup,
+            out/JK2134.pileup,
+            out/sha256_manifest.txt,
+            out/merkle_root.txt,
+            out/chainpoint_proof.json
           pinataKey: ${{ secrets.PINATA_JWT }}
           pinataSecret: ${{ secrets.PINATA_JWT }}
 
-      - name: Commit proofs
+      - name: Commit proofs back to GitHub
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "bot@users.noreply.github.com"
           git add out/*
           git commit -m "Prov‑Blast proof $(date -u +%F)" || echo "No changes"
           git push
-          Add updated prov-blast.yml with Leads fixes
+Add updated prov‑blast.yml with correct indentation

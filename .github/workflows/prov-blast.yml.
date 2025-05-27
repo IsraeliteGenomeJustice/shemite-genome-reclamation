@@ -53,4 +53,3 @@ jobs:
           git commit -m "Prov-Blast auto-proof $(date -u +%F)" || echo "No changes"
           git push
 ```
-Add updated prov-blast.yml with Pinata integration for IPFS pinning

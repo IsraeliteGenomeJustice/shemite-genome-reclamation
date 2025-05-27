@@ -1,72 +1,70 @@
-name: Prov‑Blast
+name: prov-blast
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
   push:
     branches: [ main ]
   schedule:
-    - cron: '0 4 * * 0'  # Weekly Sunday 04:00 UTC
+    - cron: '0 4 * * 0'  # Weekly Sunday at 04:00 UTC
 
 jobs:
   notarise-and-pin:
     runs-on: ubuntu-latest
-    container: quay.io/biocontainers/samtools:1.15--h3843a85_0
-
     steps:
-      - name: Checkout code
+      - name: Install OS packages
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -y samtools curl git coreutils && \
+          sudo rm -rf /var/lib/apt/lists/*
+
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install OS tools
-        run: |
-          apt-get update && \
-          apt-get install -y --no-install-recommends curl git coreutils && \
-          rm -rf /var/lib/apt/lists/*
-
-      - name: Prepare output directory
+      - name: Create output directory
         run: mkdir -p out
 
-      - name: Re‑call SNP pile‑ups
+      - name: Re-call key SNP pile-ups
         run: |
-          samtools mpileup -f ref/ref.fa data/I10145.bam > out/I10145.pileup
-          samtools mpileup -f ref/ref.fa data/JK2134.bam > out/JK2134.pileup
+          samtools mpileup -f ref.fa data/I10145.bam > out/I10145.pileup
+          samtools mpileup -f ref.fa data/JK2134.bam > out/JK2134.pileup
 
       - name: Build Merkle root & manifest
         run: |
-          python - << 'PY'
-            import hashlib, os
-            files = sorted(f for f in os.listdir('out') if f.endswith('.pileup'))
-            leaves = [hashlib.sha256(open(os.path.join('out', f),'rb').read()).digest() for f in files]
-            while len(leaves) > 1:
-                pairs = [leaves[i:i+2] for i in range(0, len(leaves), 2)]
-                leaves = [hashlib.sha256(b''.join(pair)).digest() for pair in pairs]
-            with open('out/merkle_root.txt','wb') as rootfile:
-                rootfile.write(leaves[0])
-            import subprocess
-            subprocess.run(
-                ['sha256sum'] + [os.path.join('out', f) for f in files + ['merkle_root.txt']],
-                stdout=open('out/sha256_manifest.txt','w')
-            )
-          PY
+          python3 - <<'PY'
+import hashlib, glob
+files = sorted(glob.glob('out/*.pileup'))
+leaves = [open(f,'rb').read() for f in files]
+h=lambda d: hashlib.sha256(d).digest()
+while len(leaves)>1:
+    leaves = [h(leaves[i]+leaves[i+1]) if i+1<len(leaves) else leaves[i] for i in range(0,len(leaves),2)]
+with open('merkle_root.txt','wb') as m: m.write(leaves[0])
+import subprocess
+subprocess.run(['sha256sum'] + files + ['merkle_root.txt'], stdout=open('sha256_manifest.txt','w'))
+PY
 
-      - name: Anchor on Chainpoint
+      - name: Free Chainpoint anchor
         run: |
-          ROOT=$(cut -d' ' -f1 out/sha256_manifest.txt | head -1)
-          curl -s -f -X POST -H "Content-Type: application/json" \
-            --data "{\"hashes\":[\"$ROOT\"]}" \
-            https://api.chainpoint.org/v3/anchors/bitcoin \
-            > out/chainpoint_proof.json
+          HASH=$(cut -d' ' -f1 merkle_root.txt | xxd -p -c256)
+          curl -s -X POST -H 'Content-Type:application/json' \
+            --data "{\"hashes\":[\"$HASH\"]}" \
+            https://api.chainpoint.org/v3/anchors/bitcoin > chainpoint_proof.json
 
-      - name: Pin artefacts to IPFS via Pinata
+      - name: Pin artefacts to IPFS
         uses: aquiladev/ipfs-action@v0.3.1
         with:
+          path: |
+            out/I10145.pileup,
+            out/JK2134.pileup,
+            sha256_manifest.txt,
+            merkle_root.txt,
+            chainpoint_proof.json
           service: pinata
-          path: out/I10145.pileup,out/JK2134.pileup,out/sha256_manifest.txt,out/merkle_root.txt,out/chainpoint_proof.json
           pinataKey: ${{ secrets.PINATA_JWT }}
           pinataSecret: ${{ secrets.PINATA_JWT }}
 
-      - name: Commit proofs back to GitHub
+      - name: Commit proofs back
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add out/*
-          git commit -m "Prov‑Blast proof $(date -u +%F)" || echo "No changes"
+          git add sha256_manifest.txt merkle_root.txt chainpoint_proof.json
+          git commit -m "Prov-Blast auto-proof $(date -u +%F)" || echo "No changes"
           git push

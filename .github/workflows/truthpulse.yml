@@ -8,52 +8,43 @@ on:
 jobs:
   evidence-compiler:
     runs-on: ubuntu-latest
+    container: python:3.9-slim
     steps:
-      - uses: actions/checkout@v4
-        name: Checkout code :contentReference[oaicite:6]{index=6}
-
       - name: Install OS packages
         run: |
-          sudo apt-get update && \
-          sudo apt-get install -y --no-install-recommends curl git && \
+          apt-get update && \
+          apt-get install -y --no-install-recommends curl git coreutils && \
           rm -rf /var/lib/apt/lists/*
-
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9' :contentReference[oaicite:7]{index=7}
-
+      - uses: actions/checkout@v4
+      - name: Verify suppression evidence file exists
+        run: ls -la data/suppression_evidence.csv || echo "File not found"
       - name: Create output directory
         run: mkdir -p out
-
       - name: Install Python dependencies
-        run: pip install pandas numpy
-
-      - name: Compile Evidence
         run: |
-          python - <<-'PY'
-          import pandas as pd
-          df = pd.read_csv('data/suppression_evidence.csv')
-          df[['SNP','Sample','Status']].to_json('out/evidence_summary.json')
-          with open('out/x_thread.txt','w') as f:
-              f.write(f"E-M329 suppression exposed! {len(df)} SNPs hidden. "
-                      "github.com/IsraeliteGenomeJustice/shemite-genome-reclamation #ShemiteTruth")
-          PY  # Using <<-'PY' avoids indentation errors :contentReference[oaicite:8]{index=8}
-
+          for i in {1..3}; do pip install pandas numpy && break || sleep 1; done
+      - name: Compile Evidence
+        working-directory: ./
+        run: |
+          python - << 'PY'
+import pandas as pd
+df = pd.read_csv('data/suppression_evidence.csv')
+df[['SNP','Sample','Status']].to_json('out/evidence_summary.json')
+with open('out/x_thread.txt','w') as f:
+    f.write(f"E-M329 suppression exposed! {len(df)} SNPs hidden. github.com/IsraeliteGenomeJustice/shemite-genome-reclamation #ShemiteTruth")
+PY
       - name: Anchor to Ethereum Layer-2
         run: |
           curl -s -X POST -H 'Content-Type:application/json' \
-            --data "{\"hashes\":[\"$(sha256sum out/evidence_summary.json | cut -d' ' -f1)\"]}" \
-            https://api.chainpoint.org/v3/anchors/optimism > out/chainpoint_proof.json :contentReference[oaicite:9]{index=9}
-
+          --data "{\"hashes\":[\"$(sha256sum out/evidence_summary.json | cut -d' ' -f1)\"]}" \
+          https://api.chainpoint.org/v3/anchors/optimism > out/chainpoint_proof.json
       - name: Pin artefacts to IPFS
         uses: aquiladev/ipfs-action@v0.3.1
         with:
-          service: pinata
           path: out/evidence_summary.json,out/x_thread.txt,out/chainpoint_proof.json
+          service: pinata
           pinataKey: ${{ secrets.PINATA_JWT }}
-          pinataSecret: ${{ secrets.PINATA_JWT }} :contentReference[oaicite:10]{index=10}
-
+          pinataSecret: ${{ secrets.PINATA_JWT }}
       - name: Commit Proofs
         run: |
           git config user.name "TruthPulse-Bot"

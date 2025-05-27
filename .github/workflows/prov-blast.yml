@@ -1,0 +1,70 @@
+name: Prov‑Blast
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 4 * * 0'  # Weekly Sunday 04:00 UTC
+
+jobs:
+  notarise-and-pin:
+    runs-on: ubuntu-latest
+    container: ghcr.io/chrishah/samtools-docker:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install OS tools
+        run: |
+          apt-get update && \
+          apt-get install -y --no-install-recommends curl git coreutils && \
+          rm -rf /var/lib/apt/lists/*
+
+      - name: Prepare output
+        run: mkdir -p out
+
+      - name: Re‑call pile‑ups
+        run: |
+          samtools mpileup -f ref/ref.fa data/I10145.bam > out/I10145.pileup
+          samtools mpileup -f ref/ref.fa data/JK2134.bam > out/JK2134.pileup
+
+      - name: Build Merkle root & manifest
+        run: |
+          python - << 'PY'
+import hashlib, sys, os
+files = sorted([f for f in os.listdir('out') if f.endswith('.pileup')])
+leaves = [hashlib.sha256(open('out/'+f,'rb').read()).digest() for f in files]
+while len(leaves) > 1:
+    pairs = [leaves[i:i+2] for i in range(0,len(leaves),2)]
+    leaves = [hashlib.sha256(b''.join(p)).digest() for p in pairs]
+open('out/merkle_root.txt','wb').write(leaves[0])
+import subprocess
+subprocess.run(['sha256sum'] + ['out/'+f for f in files] + ['out/merkle_root.txt'],
+               stdout=open('out/sha256_manifest.txt','w'))
+PY
+
+      - name: Anchor on Chainpoint
+        run: |
+          ROOT=$(cut -d' ' -f1 out/sha256_manifest.txt | head -1)
+          curl -s -X POST -H "Content-Type: application/json" \
+            --data "{\"hashes\":[\"$ROOT\"]}" \
+            https://api.chainpoint.org/v3/anchors/bitcoin \
+            > out/chainpoint_proof.json
+
+      - name: Pin to IPFS via Pinata
+        uses: aquiladev/ipfs-action@v0.3.1
+        with:
+          service: pinata
+          path: out/I10145.pileup,out/JK2134.pileup,out/sha256_manifest.txt,out/merkle_root.txt,out/chainpoint_proof.json
+          pinataKey: ${{ secrets.PINATA_JWT }}
+          pinataSecret: ${{ secrets.PINATA_JWT }}
+
+      - name: Commit proofs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "bot@users.noreply.github.com"
+          git add out/*
+          git commit -m "Prov‑Blast proof $(date -u +%F)" || echo "No changes"
+          git push
+          Add updated prov-blast.yml with Leads fixes

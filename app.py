@@ -731,4 +731,80 @@ class IsraeliteGenomeJustice:
                         f"🚨 LIVE SUPPRESSION ALERT: {marker} marker suppressed in {repository} "
                         f"- Sample: {sample_id} - Evidence Hash: {blockchain_hash[:16]}"
                     )
+                    self.logger.critical(alert_message)
+                    alert_count += 1
+                
+                await asyncio.sleep(30)
+            
+            except Exception as e:
+                self.logger.error(f"Real-time alerting error: {str(e)}")
+                await asyncio.sleep(60)
+    
+    def _generate_blockchain_hash(self, evidence_data: Dict) -> str:
+        """Generate a mock blockchain hash for evidence"""
+        hash_input = json.dumps(evidence_data, sort_keys=True).encode('utf-8')
+        return hashlib.sha256(hash_input).hexdigest()
+    
+    async def _generate_evidence_package(self, marker: str, repository: str) -> None:
+        """Package critical evidence into a single JSON file and log it"""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        package_path = Path(f"results/evidence_packages/{marker}_{repository}_{timestamp}.json")
+        
+        cursor = self.evidence_db.execute('''
+            SELECT * FROM suppression_evidence
+            WHERE snp_marker = ? AND repository = ?
+        ''', (marker, repository))
+        
+        rows = cursor.fetchall()
+        columns = [description[0] for description in cursor.description]
+        
+        evidence_list = [dict(zip(columns, row)) for row in rows]
+        
+        package_path.parent.mkdir(parents=True, exist_ok=True)
+        with package_path.open('w') as f:
+            json.dump(evidence_list, f, indent=4)
+        
+        self.stats['evidence_packages_generated'] += 1
+        self.logger.info(f"📦 Evidence package created: {package_path}")
+    
+    def _update_statistics(self) -> None:
+        """Update and log current monitoring statistics"""
+        self.logger.info(
+            f"📊 Stats => Scanned: {self.stats['repositories_scanned']} | "
+            f"Suppressed: {self.stats['suppressed_samples_found']} | "
+            f"Packages: {self.stats['evidence_packages_generated']} | "
+            f"Affected: {self.stats['affected_individuals']} | "
+            f"Blockchain: {self.stats['blockchain_verifications']}"
+        )
+    
+    async def _generate_final_report(self) -> None:
+        """Generate final report after monitoring completes"""
+        report_path = Path(f"results/daily_reports/final_report_{datetime.now().strftime('%Y%m%d')}.csv")
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        cursor = self.evidence_db.execute('''
+            SELECT snp_marker, repository, COUNT(*) as total_suppressed
+            FROM suppression_evidence
+            GROUP BY snp_marker, repository
+        ''')
+        
+        rows = cursor.fetchall()
+        
+        with report_path.open('w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Marker', 'Repository', 'Total Suppressed'])
+            for row in rows:
+                writer.writerow(row)
+        
+        self.logger.info(f"📝 Final report generated: {report_path}")
+    
+    async def deploy(self) -> None:
+        """Deploy the monitoring system"""
+        self.logger.info("🏁 Deploying Israelite Genome Justice Monitoring System")
+        await self.start_real_time_monitoring()
+        await self.session.close()
+
+if __name__ == "__main__":
+    igj = IsraeliteGenomeJustice()
+    asyncio.run(igj.deploy())
 ```
